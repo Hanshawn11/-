@@ -4,6 +4,9 @@
 score = (tfidf * word number)/word number
 
 测试数据：搜狐新闻
+
 停用词表： 哈工大停用词表
+
 分词： jieba
+
 分句：通过标点符号。！？.
