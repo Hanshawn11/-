@@ -1,38 +1,27 @@
 from bs4 import BeautifulSoup
-#----------------------------
-#准备文章
+import re  
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
+import jieba
 
-f_news = open('news_path', 'r') 
-soup= BeautifulSoup(f_news) 
-print('file name:',soup.name)
-print('文本内容:',soup.content.string)  #<tag>.string 只保留文本
-
-text = []
-for i in soup.find_all(name='content'):     #遍历html文件中所有<content> 下的内容
-  i = i.string
-  text.append(i)
-  
-print('txt number:',len(text))
-print('the first txt:',text[0])
-
-#-------------------------------------
-#处理文本（标点，停用词，分词，分句）
-
-import re  # 中文去标点
 def remove_punc(line):
   rule = re.compile(r'[^a-zA-Z0-9\u4e00-\u9fa5]')
   line = rule.sub('',line)
   return line
 
-# 去停用词
-import jieba. analyse
+# 去停用词 
 stopwords=[]   # 加载中文停用词
-for word in open('/content/drive/My Drive/data/哈工大停用词表.txt','r'):
- stopwords.append(word.strip())
 
-# 分句
+with open('./data/哈工大停用词表.txt', 'r', encoding='UTF-8') as f:
+  temp = f.read()
+  for word in temp:
+    # 去除换行符
+    stopwords.append(word.strip())
+
+
+
 def cut_sent(para):
-  sents = re.split('(。|！|\!|\.|？|\?)',para)   #有分隔符
+  sents = re.split('(。|！|\!|\.|？|\?)', para)   #有分隔符
   new_sent = []
   for i in range(int(len(sents)/2)):
     sent = sents[2*i] + sents[2*i+1]    #形成带标点符号的完整句子
@@ -40,12 +29,6 @@ def cut_sent(para):
 
   return new_sent   
   
-
-#---------------------------------------
-#计算tfidf及抽取关键句
-
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.feature_extraction.text import TfidfTransformer
 
 
 def Get_key_sents(paragraph):
@@ -77,33 +60,41 @@ def Get_key_sents(paragraph):
       score.append(tfidf_score)
       sent_score = sum(score)/len(score)
     return sent_score
-  #print('Bag of words:', bag_of_words)
-  #print('number of words:',len(bag_of_words))
+
   X = vectoerizer.transform(corpus1)
 
   # transform tfidf
   tfidf_transformer = TfidfTransformer()
   tfidf_transformer.fit(X.toarray())
 
-    #for idx, word in enumerate(vectoerizer.get_feature_names()):
-      #print("{}\t{}".format(word, tfidf_transformer.idf_[idx]))
-
-
-
   score_list = []
   for sent in sent2words:
     score_list.append(compute_sent_score(sent))
 
 
-  m = max(score_list)   # 取出所有最高分数的句子
-  idx = [i for i, j in enumerate(score_list) if j == m]
+  f = max(score_list)   # 取出所有最高分数的句子
+  idx = [i for i, j in enumerate(score_list) if j == f]
+  score_list.remove(f)
+
   key_sents = []
   for i in idx:
     key_sents.append(sent2words_with_punc[i])
 
+  s = max(score_list)
+  idx = [i for i, j in enumerate(score_list) if j == s]
+  for i in idx:
+    key_sents.append(sent2words_with_punc[i])
+  
   return key_sents
     
 
-Get_key_sents(text[12])
->>
-['世间本没有歧视，歧视源自于人的内心活动，“以爱之名”２００９年中国艾滋病反歧视主题创意大赛开幕，让“爱”在高校流动。']
+def main(pa):
+  res = Get_key_sents(pa)
+  return res
+
+if __name__ == '__main__':
+  print('please input text: ')
+  pa = input()
+  ret = main(pa)
+  print(ret)
+  print('success')
